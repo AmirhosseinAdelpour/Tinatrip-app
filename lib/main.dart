@@ -17,6 +17,84 @@ void main() {
   runApp(const TunaTripApp());
 }
 
+// ---- ThemeExtension for custom colors --------------------------------------
+
+@immutable
+class AppColors extends ThemeExtension<AppColors> {
+  const AppColors({
+    required this.background,
+    required this.surface,
+    required this.line,
+    required this.primary,
+    required this.secondary,
+    required this.onBackground,
+    required this.muted,
+    required this.error,
+    required this.accent,
+  });
+
+  final Color background;
+  final Color surface;
+  final Color line;
+  final Color primary;
+  final Color secondary;
+  final Color onBackground;
+  final Color muted;
+  final Color error;
+  final Color accent;
+
+  static const light = AppColors(
+    background: Color(0xFF0B1B27),
+    surface: Color(0xFF123041),
+    line: Color(0xFF1F4050),
+    primary: Color(0xFF4BC2ED),
+    secondary: Color(0xFFE9AF4F),
+    onBackground: Color(0xFFEAF2F4),
+    muted: Color(0xFF8AA5AF),
+    error: Color(0xFFE0684E),
+    accent: Color(0xFF97A6DD),
+  );
+
+  @override
+  AppColors copyWith({
+    Color? background,
+    Color? surface,
+    Color? line,
+    Color? primary,
+    Color? secondary,
+    Color? onBackground,
+    Color? muted,
+    Color? error,
+    Color? accent,
+  }) =>
+      AppColors(
+        background: background ?? this.background,
+        surface: surface ?? this.surface,
+        line: line ?? this.line,
+        primary: primary ?? this.primary,
+        secondary: secondary ?? this.secondary,
+        onBackground: onBackground ?? this.onBackground,
+        muted: muted ?? this.muted,
+        error: error ?? this.error,
+        accent: accent ?? this.accent,
+      );
+
+  @override
+  AppColors lerp(AppColors? other, double t) => AppColors(
+    background: Color.lerp(background, other?.background, t)!,
+    surface: Color.lerp(surface, other?.surface, t)!,
+    line: Color.lerp(line, other?.line, t)!,
+    primary: Color.lerp(primary, other?.primary, t)!,
+    secondary: Color.lerp(secondary, other?.secondary, t)!,
+    onBackground: Color.lerp(onBackground, other?.onBackground, t)!,
+    muted: Color.lerp(muted, other?.muted, t)!,
+    error: Color.lerp(error, other?.error, t)!,
+    accent: Color.lerp(accent, other?.accent, t)!,
+  );
+}
+
+// ---- App -------------------------------------------------------------------
+
 class TunaTripApp extends StatelessWidget {
   const TunaTripApp({super.key});
 
@@ -37,15 +115,23 @@ class TunaTripApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         fontFamily: 'Vazirmatn',
+        extensions: const [AppColors.light],
         colorScheme: const ColorScheme.dark(
-          primary: kTurquoise,
-          secondary: kGold,
-          surface: kNightRaised,
-          onSurface: kMist,
+          primary: Color(0xFF4BC2ED),
+          secondary: Color(0xFFE9AF4F),
+          surface: Color(0xFF123041),
+          onSurface: Color(0xFFEAF2F4),
+          error: Color(0xFFE0684E),
+          outline: Color(0xFF1F4050),
         ),
-        scaffoldBackgroundColor: kNight,
+        scaffoldBackgroundColor: Color(0xFF0B1B27),
         textSelectionTheme: const TextSelectionThemeData(
-          cursorColor: kTurquoise,
+          cursorColor: Color(0xFF4BC2ED),
+        ),
+        appBarTheme: const AppBarTheme(
+          centerTitle: true,
+          elevation: 0,
+          scrolledUnderElevation: 1,
         ),
       ),
       home: const SplashHost(),
@@ -53,17 +139,11 @@ class TunaTripApp extends StatelessWidget {
   }
 }
 
-// ---- Design tokens ---------------------------------------------------------
-
-const kNight = Color(0xFF0B1B27);
-const kNightRaised = Color(0xFF123041);
-const kLine = Color(0xFF1F4050);
-const kTurquoise = Color(0xFF4BC2ED);
-const kGold = Color(0xFFE9AF4F);
-const kMist = Color(0xFFEAF2F4);
-const kMuted = Color(0xFF8AA5AF);
-const kVermilion = Color(0xFFE0684E);
-const kPeriwinkle = Color(0xFF97A6DD);
+extension BuildContextExtensions on BuildContext {
+  AppColors get appColors => Theme.of(this).extension<AppColors>()!;
+  ColorScheme get colorScheme => Theme.of(this).colorScheme;
+  TextTheme get textTheme => Theme.of(this).textTheme;
+}
 
 // ---- Splash ----------------------------------------------------------------
 
@@ -177,32 +257,38 @@ class _SplashView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     final compassFade = _interval(0.0, 0.25);
     final compassSpin = CurvedAnimation(
       parent: controller,
       curve: const Interval(0.0, 0.75, curve: Curves.linear),
     );
     final titleFade = _interval(0.18, 0.38);
-    final taglineFade = _interval(0.28, 0.46);
     final arc = _interval(0.34, 0.66);
     final card = _interval(0.52, 0.74);
     final chips = _interval(0.62, 0.82);
     final foot = _interval(0.72, 0.90);
 
     return Material(
-      color: kNight,
+      color: colors.background,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          const DecoratedBox(
+          DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFF050E14), kNight, Color(0xFF0C1E2A)],
+                colors: [
+                  colors.background.withValues(alpha: 0.5),
+                  colors.background,
+                  colors.surface,
+                ],
               ),
             ),
-            child: CustomPaint(painter: _StarfieldPainter()),
+            child: const RepaintBoundary(
+              child: CustomPaint(painter: _StarfieldPainter()),
+            ),
           ),
           Positioned.fill(
             child: DecoratedBox(
@@ -211,7 +297,7 @@ class _SplashView extends StatelessWidget {
                   center: const Alignment(0.0, -0.3),
                   radius: 1.2,
                   colors: [
-                    kTurquoise.withValues(alpha: 0.06),
+                    colors.primary.withValues(alpha: 0.06),
                     Colors.transparent,
                   ],
                 ),
@@ -235,12 +321,11 @@ class _SplashView extends StatelessWidget {
                       const SizedBox(height: 24),
                       FadeTransition(
                         opacity: titleFade,
-                        child: const Text(
+                        child: Text(
                           'تیناتریپ',
-                          style: TextStyle(
-                            fontSize: 34,
+                          style: context.textTheme.displaySmall?.copyWith(
                             fontWeight: FontWeight.w800,
-                            color: kMist,
+                            color: colors.onBackground,
                             letterSpacing: 0.8,
                           ),
                         ),
@@ -252,16 +337,20 @@ class _SplashView extends StatelessWidget {
                         height: 80,
                         child: FadeTransition(
                           opacity: arc,
-                          child: CustomPaint(
-                            painter: _FlightTrailPainter(
-                              progress: CurvedAnimation(
-                                parent: controller,
-                                curve: const Interval(
-                                  0.34,
-                                  0.66,
-                                  curve: Curves.easeInOut,
-                                ),
-                              ).value,
+                          child: RepaintBoundary(
+                            child: CustomPaint(
+                              painter: _FlightTrailPainter(
+                                progress: CurvedAnimation(
+                                  parent: controller,
+                                  curve: const Interval(
+                                    0.34,
+                                    0.66,
+                                    curve: Curves.easeInOut,
+                                  ),
+                                ).value,
+                                baseColor: colors.line,
+                                glowColor: colors.primary,
+                              ),
                             ),
                           ),
                         ),
@@ -296,9 +385,8 @@ class _SplashView extends StatelessWidget {
                         opacity: foot,
                         child: Text(
                           'تینا تریپ، پلی به سوی دنیا',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: kMuted.withValues(alpha: 0.7),
+                          style: context.textTheme.bodySmall?.copyWith(
+                            color: colors.muted.withValues(alpha: 0.7),
                           ),
                         ),
                       ),
@@ -324,6 +412,7 @@ class _CompassRose extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return FadeTransition(
       opacity: fade,
       child: ScaleTransition(
@@ -339,9 +428,11 @@ class _CompassRose extends StatelessWidget {
               children: [
                 Transform.rotate(
                   angle: spin.value * math.pi * 2,
-                  child: CustomPaint(
-                    size: const Size(140, 140),
-                    painter: _CompassPainter(color: kTurquoise),
+                  child: RepaintBoundary(
+                    child: CustomPaint(
+                      size: const Size(140, 140),
+                      painter: _CompassPainter(color: colors.primary),
+                    ),
                   ),
                 ),
                 Container(
@@ -350,7 +441,7 @@ class _CompassRose extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: kTurquoise.withValues(alpha: 0.4),
+                      color: colors.primary.withValues(alpha: 0.4),
                       width: 1.5,
                     ),
                   ),
@@ -360,15 +451,15 @@ class _CompassRose extends StatelessWidget {
                   height: 70,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: kNight,
+                    color: colors.background,
                     border: Border.all(
-                      color: kTurquoise.withValues(alpha: 0.6),
+                      color: colors.primary.withValues(alpha: 0.6),
                       width: 1.2,
                     ),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.explore,
-                    color: kTurquoise,
+                    color: colors.primary,
                     size: 32,
                   ),
                 ),
@@ -432,48 +523,21 @@ class _CompassPainter extends CustomPainter {
       oldDelegate.color != color;
 }
 
-class _LogoBadge extends StatelessWidget {
-  const _LogoBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 80,
-      height: 80,
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Image.asset('assets/logo.jpg', fit: BoxFit.contain),
-      ),
-    );
-  }
-}
-
 class _SplashSearchCard extends StatelessWidget {
   const _SplashSearchCard();
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: kNightRaised,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: kLine),
+        border: Border.all(color: colors.line),
         boxShadow: [
           BoxShadow(
-            color: kTurquoise.withValues(alpha: 0.1),
+            color: colors.primary.withValues(alpha: 0.1),
             blurRadius: 30,
             spreadRadius: 2,
           ),
@@ -482,25 +546,26 @@ class _SplashSearchCard extends StatelessWidget {
       child: Row(
         children: [
           const SizedBox(width: 6),
-          Icon(Icons.flight_takeoff, color: kTurquoise, size: 20),
+          Icon(Icons.flight_takeoff, color: colors.primary, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
+              children: [
                 Text(
                   'کجا می‌خواهید بروید؟',
-                  style: TextStyle(
-                    fontSize: 15,
+                  style: context.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: kMist,
+                    color: colors.onBackground,
                   ),
                 ),
-                SizedBox(height: 3),
+                const SizedBox(height: 3),
                 Text(
                   'شهر، فرودگاه یا نام هتل',
-                  style: TextStyle(fontSize: 12, color: kMuted),
+                  style: context.textTheme.bodySmall?.copyWith(
+                    color: colors.muted,
+                  ),
                 ),
               ],
             ),
@@ -509,12 +574,12 @@ class _SplashSearchCard extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [kTurquoise, Color(0xFF00B894)],
+              gradient: LinearGradient(
+                colors: [colors.primary, colors.accent],
               ),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.search, color: kNight, size: 20),
+            child: Icon(Icons.search, color: colors.background, size: 20),
           ),
         ],
       ),
@@ -529,21 +594,24 @@ class _SplashChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
       decoration: BoxDecoration(
-        color: kNightRaised,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(100),
-        border: Border.all(color: kLine),
+        border: Border.all(color: colors.line),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.place, size: 14, color: kGold),
+          Icon(Icons.place, size: 14, color: colors.secondary),
           const SizedBox(width: 6),
           Text(
             label,
-            style: const TextStyle(fontSize: 12.5, color: kMist),
+            style: context.textTheme.bodySmall?.copyWith(
+              color: colors.onBackground,
+            ),
           ),
         ],
       ),
@@ -553,17 +621,17 @@ class _SplashChip extends StatelessWidget {
 
 // ---- Home ------------------------------------------------------------------
 
+enum _ServiceAccent { primary, secondary, accent, error }
+
 class _ServiceItem {
   final String label;
-  final String subtitle;
   final IconData icon;
   final String? url;
-  final Color accent;
+  final _ServiceAccent accent;
   final bool opensForm;
 
   const _ServiceItem({
     required this.label,
-    required this.subtitle,
     required this.icon,
     this.url,
     required this.accent,
@@ -597,30 +665,26 @@ class _HomePageState extends State<HomePage>
   static const _services = [
     _ServiceItem(
       label: 'پرواز',
-      subtitle: 'بلیط هواپیما',
       icon: Icons.flight,
       url: 'https://tinatrip.com/flight/',
-      accent: kTurquoise,
+      accent: _ServiceAccent.primary,
     ),
     _ServiceItem(
       label: 'هتل',
-      subtitle: 'رزرو اقامت',
       icon: Icons.hotel,
       url: 'https://tinatrip.com/hotels/',
-      accent: kGold,
+      accent: _ServiceAccent.secondary,
     ),
     _ServiceItem(
       label: 'تور',
-      subtitle: 'packageهای مسافرتی',
       icon: Icons.explore,
       url: 'https://tinatrip.com/tours/',
-      accent: kPeriwinkle,
+      accent: _ServiceAccent.accent,
     ),
     _ServiceItem(
       label: 'گشت',
-      subtitle: 'مشاوره سفر',
       icon: Icons.edit_calendar,
-      accent: kVermilion,
+      accent: _ServiceAccent.error,
       opensForm: true,
     ),
   ];
@@ -715,6 +779,7 @@ class _HomePageState extends State<HomePage>
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Scaffold(
       key: _scaffoldKey,
       drawer: _HomeDrawer(
@@ -735,16 +800,19 @@ class _HomePageState extends State<HomePage>
           opacity: _interval(0.7, 0.9).value,
           child: FloatingActionButton.extended(
             heroTag: 'contactFab',
-            backgroundColor: kTurquoise,
-            foregroundColor: kNight,
+            backgroundColor: colors.primary,
+            foregroundColor: colors.background,
             elevation: 8,
             onPressed: () => Navigator.of(
               context,
             ).push(MaterialPageRoute(builder: (_) => const ContactPage())),
             icon: const Icon(Icons.support_agent, size: 20),
-            label: const Text(
+            label: Text(
               'تماس با ما',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+              style: context.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: colors.background,
+              ),
             ),
           ),
         ),
@@ -776,13 +844,13 @@ class _HomePageState extends State<HomePage>
                                 ),
                               ),
                               const SizedBox(height: 20),
-                              const Text(
+                              Text(
                                 'تیناتریپ',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 26,
+                                style: context.textTheme.headlineMedium
+                                    ?.copyWith(
                                   fontWeight: FontWeight.w800,
-                                  color: kTurquoise,
+                                  color: colors.primary,
                                   letterSpacing: 0.5,
                                 ),
                               ),
@@ -793,16 +861,15 @@ class _HomePageState extends State<HomePage>
                                   vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: kTurquoise.withValues(alpha: 0.1),
+                                  color: colors.primary.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(100),
                                 ),
-                                child: const Text(
+                                child: Text(
                                   'مرجع بهترین تورها، هتل‌ها و پروازهای داخلی و خارجی',
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 12.5,
+                                  style: context.textTheme.bodySmall?.copyWith(
                                     fontWeight: FontWeight.w500,
-                                    color: kTurquoise,
+                                    color: colors.primary,
                                   ),
                                 ),
                               ),
@@ -850,15 +917,22 @@ class _HomeBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
+    final colors = context.appColors;
+    return DecoratedBox(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF050E14), kNight, Color(0xFF0C1E2A)],
+          colors: [
+            colors.background.withValues(alpha: 0.5),
+            colors.background,
+            colors.surface,
+          ],
         ),
       ),
-      child: const CustomPaint(painter: _StarfieldPainter()),
+      child: const RepaintBoundary(
+        child: CustomPaint(painter: _StarfieldPainter()),
+      ),
     );
   }
 }
@@ -928,8 +1002,17 @@ class _ServiceBar extends StatelessWidget {
   final Animation<double> reveal;
   final VoidCallback onTap;
 
+  Color _accentFor(AppColors colors) => switch (item.accent) {
+        _ServiceAccent.primary => colors.primary,
+        _ServiceAccent.secondary => colors.secondary,
+        _ServiceAccent.accent => colors.accent,
+        _ServiceAccent.error => colors.error,
+      };
+
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
+    final accent = _accentFor(colors);
     return SlideTransition(
       position: Tween<Offset>(
         begin: const Offset(0, 0.14),
@@ -938,7 +1021,7 @@ class _ServiceBar extends StatelessWidget {
       child: FadeTransition(
         opacity: reveal,
         child: Material(
-          color: kNightRaised,
+          color: colors.surface,
           borderRadius: BorderRadius.circular(16),
           child: InkWell(
             onTap: onTap,
@@ -948,41 +1031,40 @@ class _ServiceBar extends StatelessWidget {
               clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: kLine),
+                border: Border.all(color: colors.line),
                 gradient: LinearGradient(
                   begin: Alignment.centerRight,
                   end: Alignment.centerLeft,
                   colors: [
-                    item.accent.withValues(alpha: 0.18),
-                    kNightRaised,
+                    accent.withValues(alpha: 0.18),
+                    colors.surface,
                   ],
                 ),
               ),
               child: Row(
                 children: [
-                  Container(width: 4, color: item.accent),
+                  Container(width: 4, color: accent),
                   const SizedBox(width: 16),
                   Container(
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: item.accent.withValues(alpha: 0.14),
+                      color: accent.withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(13),
                       border: Border.all(
-                        color: item.accent.withValues(alpha: 0.4),
+                        color: accent.withValues(alpha: 0.4),
                         width: 1.2,
                       ),
                     ),
-                    child: Icon(item.icon, color: item.accent, size: 21),
+                    child: Icon(item.icon, color: accent, size: 21),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Text(
                       item.label,
-                      style: const TextStyle(
-                        fontSize: 18,
+                      style: context.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: kMist,
+                        color: colors.onBackground,
                       ),
                     ),
                   ),
@@ -990,101 +1072,12 @@ class _ServiceBar extends StatelessWidget {
                     padding: const EdgeInsets.only(left: 16),
                     child: Icon(
                       Icons.chevron_left,
-                      color: item.accent.withValues(alpha: 0.8),
+                      color: accent.withValues(alpha: 0.8),
                       size: 24,
                     ),
                   ),
                 ],
               ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _GateBar extends StatelessWidget {
-  const _GateBar({
-    required this.item,
-    required this.reveal,
-    required this.onTap,
-  });
-
-  final _ServiceItem item;
-  final Animation<double> reveal;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return SlideTransition(
-      position: Tween<Offset>(
-        begin: const Offset(0, 0.14),
-        end: Offset.zero,
-      ).animate(reveal),
-      child: Material(
-        color: kNightRaised,
-        borderRadius: BorderRadius.circular(18),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(18),
-          child: Container(
-            height: 74,
-            clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: kLine),
-              gradient: LinearGradient(
-                begin: Alignment.centerRight,
-                end: Alignment.centerLeft,
-                colors: [
-                  item.accent.withValues(alpha: 0.12),
-                  kNightRaised,
-                ],
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(width: 4, color: item.accent),
-                const SizedBox(width: 16),
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: item.accent.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: item.accent.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Icon(item.icon, color: item.accent, size: 20),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        item.label,
-                        style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                          color: kMist,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 16),
-                  child: Icon(
-                    Icons.chevron_left,
-                    color: item.accent.withValues(alpha: 0.7),
-                    size: 22,
-                  ),
-                ),
-              ],
             ),
           ),
         ),
@@ -1106,6 +1099,7 @@ class _ToolsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     final rows = <List<_TravelTool>>[
       for (var i = 0; i < tools.length; i += 2)
         tools.sublist(i, math.min(i + 2, tools.length)),
@@ -1122,27 +1116,23 @@ class _ToolsSection extends StatelessWidget {
                 width: 20,
                 height: 2,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [kTurquoise, Colors.transparent],
+                  gradient: LinearGradient(
+                    colors: [colors.primary, Colors.transparent],
                   ),
                   borderRadius: BorderRadius.circular(1),
                 ),
               ),
               const SizedBox(width: 10),
-              const Text(
+              Text(
                 'ابزارهای سفر',
-                style: TextStyle(
-                  fontSize: 13,
+                style: context.textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: kMuted,
+                  color: colors.muted,
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: Container(
-                  height: 1,
-                  color: kLine,
-                ),
+                child: Container(height: 1, color: colors.line),
               ),
             ],
           ),
@@ -1187,8 +1177,9 @@ class _ToolTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Material(
-      color: kNight,
+      color: colors.background,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,
@@ -1198,7 +1189,7 @@ class _ToolTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: kLine),
+            border: Border.all(color: colors.line),
           ),
           child: Row(
             children: [
@@ -1206,13 +1197,13 @@ class _ToolTile extends StatelessWidget {
                 width: 30,
                 height: 30,
                 decoration: BoxDecoration(
-                  color: kPeriwinkle.withValues(alpha: 0.12),
+                  color: colors.accent.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(9),
                   border: Border.all(
-                    color: kPeriwinkle.withValues(alpha: 0.25),
+                    color: colors.accent.withValues(alpha: 0.25),
                   ),
                 ),
-                child: Icon(tool.icon, color: kMuted, size: 15),
+                child: Icon(tool.icon, color: colors.muted, size: 15),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -1220,10 +1211,9 @@ class _ToolTile extends StatelessWidget {
                   tool.label,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 12,
+                  style: context.textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: kMist,
+                    color: colors.onBackground,
                     height: 1.35,
                   ),
                 ),
@@ -1258,9 +1248,15 @@ class _RevealText extends StatelessWidget {
 }
 
 class _FlightTrailPainter extends CustomPainter {
-  const _FlightTrailPainter({required this.progress});
+  const _FlightTrailPainter({
+    required this.progress,
+    required this.baseColor,
+    required this.glowColor,
+  });
 
   final double progress;
+  final Color baseColor;
+  final Color glowColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1277,13 +1273,13 @@ class _FlightTrailPainter extends CustomPainter {
     final visible = metric.extractPath(0, metric.length * progress);
 
     final base = Paint()
-      ..color = kLine
+      ..color = baseColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.4
       ..strokeCap = StrokeCap.round;
 
     final glow = Paint()
-      ..color = kTurquoise
+      ..color = glowColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3
       ..strokeCap = StrokeCap.round;
@@ -1336,7 +1332,9 @@ class _FlightTrailPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _FlightTrailPainter oldDelegate) =>
-      oldDelegate.progress != progress;
+      oldDelegate.progress != progress ||
+      oldDelegate.baseColor != baseColor ||
+      oldDelegate.glowColor != glowColor;
 }
 
 class _MenuButton extends StatelessWidget {
@@ -1346,8 +1344,9 @@ class _MenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Material(
-      color: kNightRaised,
+      color: colors.surface,
       shape: const CircleBorder(),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -1357,9 +1356,9 @@ class _MenuButton extends StatelessWidget {
           height: 42,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: kLine),
+            border: Border.all(color: colors.line),
           ),
-          child: const Icon(Icons.menu, color: kMist, size: 20),
+          child: Icon(Icons.menu, color: colors.onBackground, size: 20),
         ),
       ),
     );
@@ -1374,8 +1373,9 @@ class _HomeDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Drawer(
-      backgroundColor: kNightRaised,
+      backgroundColor: colors.surface,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1401,18 +1401,19 @@ class _HomeDrawer extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  const Text(
+                  Text(
                     'تیناتریپ',
-                    style: TextStyle(
-                      fontSize: 20,
+                    style: context.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w800,
-                      color: kMist,
+                      color: colors.onBackground,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'منوی اصلی',
-                    style: TextStyle(fontSize: 12, color: kMuted.withValues(alpha: 0.7)),
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: colors.muted.withValues(alpha: 0.7),
+                    ),
                   ),
                 ],
               ),
@@ -1421,18 +1422,18 @@ class _HomeDrawer extends StatelessWidget {
             Container(
               height: 1,
               margin: const EdgeInsets.symmetric(horizontal: 20),
-              color: kLine,
+              color: colors.line,
             ),
             const SizedBox(height: 12),
             _DrawerTile(
               icon: Icons.article_outlined,
-              color: kTurquoise,
+              color: colors.primary,
               label: 'وبلاگ',
               onTap: onBlog,
             ),
             _DrawerTile(
               icon: Icons.description_outlined,
-              color: kGold,
+              color: colors.secondary,
               label: 'قوانین',
               onTap: onRules,
             ),
@@ -1442,7 +1443,9 @@ class _HomeDrawer extends StatelessWidget {
               child: Text(
                 'تینا تریپ، پلی به سوی دنیا',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 11.5, color: kMuted.withValues(alpha: 0.6)),
+                style: context.textTheme.bodySmall?.copyWith(
+                  color: colors.muted.withValues(alpha: 0.6),
+                ),
               ),
             ),
           ],
@@ -1467,6 +1470,7 @@ class _DrawerTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Material(
       color: Colors.transparent,
       child: ListTile(
@@ -1483,9 +1487,11 @@ class _DrawerTile extends StatelessWidget {
         ),
         title: Text(
           label,
-          style: const TextStyle(color: kMist, fontSize: 14.5),
+          style: context.textTheme.bodyLarge?.copyWith(
+            color: colors.onBackground,
+          ),
         ),
-        trailing: const Icon(Icons.chevron_left, color: kMuted, size: 20),
+        trailing: Icon(Icons.chevron_left, color: colors.muted, size: 20),
         onTap: onTap,
       ),
     );
@@ -1505,8 +1511,9 @@ class _PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Material(
-      color: kTurquoise,
+      color: colors.primary,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,
@@ -1518,7 +1525,7 @@ class _PrimaryButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
-                color: kTurquoise.withValues(alpha: 0.3),
+                color: colors.primary.withValues(alpha: 0.3),
                 blurRadius: 16,
                 offset: const Offset(0, 6),
               ),
@@ -1527,13 +1534,12 @@ class _PrimaryButton extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: kNight, size: 18),
+              Icon(icon, color: colors.background, size: 18),
               const SizedBox(width: 8),
               Text(
                 label,
-                style: const TextStyle(
-                  color: kNight,
-                  fontSize: 14,
+                style: context.textTheme.labelLarge?.copyWith(
+                  color: colors.background,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -1558,6 +1564,7 @@ class _GhostButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -1567,18 +1574,17 @@ class _GhostButton extends StatelessWidget {
           height: 52,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: kLine, width: 1.4),
+            border: Border.all(color: colors.line, width: 1.4),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: kGold, size: 18),
+              Icon(icon, color: colors.secondary, size: 18),
               const SizedBox(width: 8),
               Text(
                 label,
-                style: const TextStyle(
-                  color: kMist,
-                  fontSize: 14,
+                style: context.textTheme.labelLarge?.copyWith(
+                  color: colors.onBackground,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1660,12 +1666,13 @@ class _ReserveFormPageState extends State<ReserveFormPage> {
     if (!mounted) return;
     setState(() => _sending = false);
 
+    final colors = context.appColors;
     if (ok) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('درخواست شما ثبت شد؛ کارشناسان ما به‌زودی با شما تماس می‌گیرند.'),
+        SnackBar(
+          content: const Text('درخواست شما ثبت شد؛ کارشناسان ما به‌زودی با شما تماس می‌گیرند.'),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: kNightRaised,
+          backgroundColor: colors.surface,
         ),
       );
       Navigator.of(context).pop();
@@ -1674,7 +1681,7 @@ class _ReserveFormPageState extends State<ReserveFormPage> {
         SnackBar(
           content: Text(message),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: kVermilion,
+          backgroundColor: colors.error,
         ),
       );
     }
@@ -1682,14 +1689,15 @@ class _ReserveFormPageState extends State<ReserveFormPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Scaffold(
       appBar: _appBar(context, 'گشت'),
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF0C1E2A), kNight],
+            colors: [colors.surface, colors.background],
           ),
         ),
         child: SafeArea(
@@ -1703,19 +1711,22 @@ class _ReserveFormPageState extends State<ReserveFormPage> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: kTurquoise.withValues(alpha: 0.08),
+                      color: colors.primary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: kTurquoise.withValues(alpha: 0.2),
+                        color: colors.primary.withValues(alpha: 0.2),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'برای گشت، شهر مقصد و شماره تماس‌تان را بفرستید؛ کارشناسان ما با شما تماس می‌گیرند.',
-                      style: TextStyle(color: kMist, fontSize: 14, height: 1.7),
+                      style: context.textTheme.bodyMedium?.copyWith(
+                        color: colors.onBackground,
+                        height: 1.7,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 24),
-                  const _FieldLabel('شهر مقصد'),
+                  _FieldLabel('شهر مقصد'),
                   const SizedBox(height: 10),
                   TextFormField(
                     controller: _cityController,
@@ -1728,17 +1739,20 @@ class _ReserveFormPageState extends State<ReserveFormPage> {
                     decoration: _inputDecoration(
                       'مثلاً مشهد، استانبول یا کیش',
                       Icons.place,
+                      colors,
                     ),
                   ),
                   const SizedBox(height: 24),
-                  const _FieldLabel('شماره تماس'),
+                  _FieldLabel('شماره تماس'),
                   const SizedBox(height: 10),
                   TextFormField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
                     textDirection: TextDirection.ltr,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 16, letterSpacing: 1),
+                    style: context.textTheme.bodyLarge?.copyWith(
+                      letterSpacing: 1,
+                    ),
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'[0-9+]')),
                     ],
@@ -1753,12 +1767,13 @@ class _ReserveFormPageState extends State<ReserveFormPage> {
                     decoration: _inputDecoration(
                       'مثلاً 09123456789',
                       Icons.phone_iphone,
+                      colors,
                     ),
                   ),
                   const SizedBox(height: 32),
                   _sending
                       ? const Center(
-                          child: CircularProgressIndicator(color: kTurquoise),
+                          child: CircularProgressIndicator(),
                         )
                       : _PrimaryButton(
                           label: 'ارسال درخواست',
@@ -1783,42 +1798,38 @@ class _FieldLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Text(
       text,
-      style: const TextStyle(
-        color: kMist,
-        fontSize: 14,
+      style: context.textTheme.titleMedium?.copyWith(
+        color: colors.onBackground,
         fontWeight: FontWeight.w600,
       ),
     );
   }
 }
 
-InputDecoration _inputDecoration(String hint, IconData icon) {
+InputDecoration _inputDecoration(String hint, IconData icon, AppColors colors) {
   return InputDecoration(
     hintText: hint,
-    hintStyle: TextStyle(color: kMuted.withValues(alpha: 0.7)),
     filled: true,
-    fillColor: kNight,
-    prefixIcon: Icon(icon, color: kTurquoise, size: 20),
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: kLine),
+      borderSide: BorderSide(color: colors.line),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: kTurquoise, width: 1.6),
+      borderSide: BorderSide(color: colors.primary, width: 1.6),
     ),
     errorBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: kVermilion),
+      borderSide: BorderSide(color: colors.error),
     ),
     focusedErrorBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: const BorderSide(color: kVermilion, width: 1.6),
+      borderSide: BorderSide(color: colors.error, width: 1.6),
     ),
-    errorStyle: const TextStyle(color: kVermilion, fontSize: 12.5),
   );
 }
 
@@ -1831,14 +1842,15 @@ class ContactPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Scaffold(
       appBar: _appBar(context, 'تماس با ما'),
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF0C1E2A), kNight],
+            colors: [colors.surface, colors.background],
           ),
         ),
         child: SafeArea(
@@ -1850,36 +1862,39 @@ class ContactPage extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: kTurquoise.withValues(alpha: 0.08),
+                    color: colors.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: kTurquoise.withValues(alpha: 0.2),
+                      color: colors.primary.withValues(alpha: 0.2),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'پشتیبانی تینا تریپ آماده دریافت انتقادات، پیشنهادات و نظرات شما می‌باشد.',
-                    style: TextStyle(color: kMist, fontSize: 14.5, height: 1.8),
+                    style: context.textTheme.bodyMedium?.copyWith(
+                      color: colors.onBackground,
+                      height: 1.8,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
                 for (final phone in _phones)
                   _ContactRow(
                     icon: Icons.phone_in_talk,
-                    color: kTurquoise,
+                    color: colors.primary,
                     label: 'شماره ثابت',
                     value: phone,
                     onTap: () => dialNumber(phone),
                   ),
                 _ContactRow(
                   icon: Icons.phone_iphone,
-                  color: kTurquoise,
+                  color: colors.primary,
                   label: 'شماره همراه',
                   value: '09909675218',
                   onTap: () => dialNumber('09909675218'),
                 ),
                 _ContactRow(
                   icon: Icons.camera_alt,
-                  color: kVermilion,
+                  color: colors.error,
                   label: 'اینستاگرام',
                   value: 'tinasafar_com',
                   onTap: () =>
@@ -1887,7 +1902,7 @@ class ContactPage extends StatelessWidget {
                 ),
                 _ContactRow(
                   icon: Icons.mail_outline,
-                  color: kGold,
+                  color: colors.secondary,
                   label: 'ایمیل',
                   value: 'tinatrip24@gmail.com',
                   onTap: () => sendEmail(
@@ -1922,10 +1937,11 @@ class _ContactRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Material(
-        color: kNightRaised,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           onTap: onTap,
@@ -1934,7 +1950,7 @@ class _ContactRow extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: kLine),
+              border: Border.all(color: colors.line),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1955,14 +1971,15 @@ class _ContactRow extends StatelessWidget {
                     children: [
                       Text(
                         label,
-                        style: TextStyle(color: kMuted.withValues(alpha: 0.7), fontSize: 12.5),
+                        style: context.textTheme.bodySmall?.copyWith(
+                          color: colors.muted.withValues(alpha: 0.7),
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         value,
-                        style: const TextStyle(
-                          color: kMist,
-                          fontSize: 14.5,
+                        style: context.textTheme.titleMedium?.copyWith(
+                          color: colors.onBackground,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -1970,7 +1987,7 @@ class _ContactRow extends StatelessWidget {
                   ),
                 ),
                 if (onTap != null)
-                  const Icon(Icons.chevron_left, color: kMuted, size: 22),
+                  Icon(Icons.chevron_left, color: colors.muted, size: 22),
               ],
             ),
           ),
@@ -1983,13 +2000,11 @@ class _ContactRow extends StatelessWidget {
 // ---- Shared app bar & webview -------------------------------------------------
 
 AppBar _appBar(BuildContext context, String title) {
+  final colors = context.appColors;
   return AppBar(
-    title: Text(
-      title,
-      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17),
-    ),
-    backgroundColor: kNightRaised,
-    foregroundColor: kMist,
+    title: Text(title, style: context.textTheme.titleMedium),
+    backgroundColor: colors.surface,
+    foregroundColor: colors.onBackground,
     elevation: 0,
     centerTitle: true,
   );
@@ -2015,9 +2030,10 @@ class _WebViewPageState extends State<WebViewPage> {
   @override
   void initState() {
     super.initState();
+    final colors = context.appColors;
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(kNight)
+      ..setBackgroundColor(colors.background)
       ..setUserAgent(
         'Mozilla/5.0 (Linux; Android 13; SM-G991B) '
         'AppleWebKit/537.36 (KHTML, like Gecko) '
@@ -2069,8 +2085,9 @@ class _WebViewPageState extends State<WebViewPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Scaffold(
-      backgroundColor: kNight,
+      backgroundColor: colors.background,
       appBar: _appBar(context, widget.title),
       body: Stack(
         children: [
@@ -2110,25 +2127,6 @@ class _RulesPageState extends State<RulesPage> {
   final List<GlobalKey> _itemKeys = List.generate(14, (_) => GlobalKey());
   List<_RulesSection>? _sections;
   bool _failed = false;
-
-  static const _accents = [kTurquoise, kGold, kPeriwinkle, kVermilion];
-
-  static const _icons = {
-    'general': Icons.gavel_outlined,
-    'privacy': Icons.privacy_tip_outlined,
-    'flight-tickets': Icons.flight_takeoff,
-    'charter-flights': Icons.flight_land,
-    'local-flights': Icons.local_airport,
-    'international-flights': Icons.public,
-    'international-airlines': Icons.airlines,
-    'pet': Icons.pets,
-    'visa': Icons.contact_page_outlined,
-    'local-hotels': Icons.hotel_outlined,
-    'international-hotels': Icons.apartment,
-    'notes': Icons.lightbulb_outline,
-    'tour': Icons.explore_outlined,
-    'passenger': Icons.assignment_ind_outlined,
-  };
 
   @override
   void initState() {
@@ -2181,20 +2179,23 @@ class _RulesPageState extends State<RulesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Scaffold(
       appBar: _appBar(context, 'قوانین'),
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF0C1E2A), kNight],
+            colors: [colors.surface, colors.background],
           ),
         ),
         child: Stack(
           children: [
             const Positioned.fill(
-              child: CustomPaint(painter: _StarfieldPainter()),
+              child: RepaintBoundary(
+                child: CustomPaint(painter: _StarfieldPainter()),
+              ),
             ),
             SafeArea(
               child: _failed
@@ -2211,10 +2212,39 @@ class _RulesPageState extends State<RulesPage> {
 
   Widget _buildContent() {
     final sections = _sections!;
+    final colors = context.appColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const _RulesHero(),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
+          child: Column(
+            children: [
+              Icon(
+                Icons.menu_book_outlined,
+                size: 48,
+                color: colors.secondary,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'قوانین و مقررات',
+                textAlign: TextAlign.center,
+                style: context.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: colors.onBackground,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'تیناتریپ | tinatrip.com',
+                textAlign: TextAlign.center,
+                style: context.textTheme.bodySmall?.copyWith(
+                  color: colors.muted,
+                ),
+              ),
+            ],
+          ),
+        ),
         _RulesToc(
           titles: [for (final s in sections) s.title],
           onTap: _jumpTo,
@@ -2229,8 +2259,6 @@ class _RulesPageState extends State<RulesPage> {
                 key: _itemKeys[index],
                 child: _RulesSectionCard(
                   index: index,
-                  accent: _accents[index % _accents.length],
-                  icon: _rulesIcon(index),
                   section: sections[index],
                 ),
               );
@@ -2238,64 +2266,6 @@ class _RulesPageState extends State<RulesPage> {
           ),
         ),
       ],
-    );
-  }
-
-  IconData _rulesIcon(int index) {
-    final id = _rulesIds[index];
-    return _icons[id] ?? Icons.menu_book_outlined;
-  }
-
-  static const _rulesIds = [
-    'general',
-    'privacy',
-    'flight-tickets',
-    'charter-flights',
-    'local-flights',
-    'international-flights',
-    'international-airlines',
-    'pet',
-    'visa',
-    'local-hotels',
-    'international-hotels',
-    'notes',
-    'tour',
-    'passenger',
-  ];
-}
-
-class _RulesHero extends StatelessWidget {
-  const _RulesHero();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.fromLTRB(20, 14, 20, 6),
-      child: Column(
-        children: [
-          Icon(
-            Icons.menu_book_outlined,
-            size: 48,
-            color: kGold,
-          ),
-          SizedBox(height: 10),
-          Text(
-            'قوانین و مقررات',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: kMist,
-            ),
-          ),
-          SizedBox(height: 4),
-          Text(
-            'تیناتریپ | tinatrip.com',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12, color: kMuted),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -2308,6 +2278,7 @@ class _RulesToc extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return SizedBox(
       height: 52,
       child: ListView.separated(
@@ -2322,13 +2293,15 @@ class _RulesToc extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
               decoration: BoxDecoration(
-                color: kNightRaised,
+                color: colors.surface,
                 borderRadius: BorderRadius.circular(100),
-                border: Border.all(color: kLine),
+                border: Border.all(color: colors.line),
               ),
               child: Text(
                 titles[index],
-                style: const TextStyle(fontSize: 12, color: kMist),
+                style: context.textTheme.bodySmall?.copyWith(
+                  color: colors.onBackground,
+                ),
               ),
             ),
           );
@@ -2341,25 +2314,24 @@ class _RulesToc extends StatelessWidget {
 class _RulesSectionCard extends StatelessWidget {
   const _RulesSectionCard({
     required this.index,
-    required this.accent,
-    required this.icon,
     required this.section,
   });
 
   final int index;
-  final Color accent;
-  final IconData icon;
   final _RulesSection section;
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
+    final accentList = [colors.primary, colors.secondary, colors.accent, colors.error];
+    final accent = accentList[index % accentList.length];
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: kNightRaised,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: kLine),
+        border: Border.all(color: colors.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2370,9 +2342,9 @@ class _RulesSectionCard extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.centerRight,
                 end: Alignment.centerLeft,
-                colors: [accent.withValues(alpha: 0.15), kNightRaised],
+                colors: [accent.withValues(alpha: 0.15), colors.surface],
               ),
-              border: Border(bottom: BorderSide(color: kLine)),
+              border: Border(bottom: BorderSide(color: colors.line)),
             ),
             child: Row(
               children: [
@@ -2384,16 +2356,19 @@ class _RulesSectionCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: accent.withValues(alpha: 0.3)),
                   ),
-                  child: Icon(icon, color: accent, size: 17),
+                  child: Icon(
+                    Icons.menu_book_outlined,
+                    color: accent,
+                    size: 17,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     section.title,
-                    style: const TextStyle(
-                      fontSize: 14,
+                    style: context.textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: kMist,
+                      color: colors.onBackground,
                       height: 1.4,
                     ),
                   ),
@@ -2418,11 +2393,9 @@ class _RulesSectionCard extends StatelessWidget {
                   Text(
                     section.paragraphs[i],
                     textAlign: TextAlign.justify,
-                    style: const TextStyle(
-                      fontSize: 13.5,
-                      color: kMist,
+                    style: context.textTheme.bodyMedium?.copyWith(
+                      color: colors.onBackground,
                       height: 1.85,
-                      fontWeight: FontWeight.w400,
                     ),
                   ),
                   if (i < section.paragraphs.length - 1)
@@ -2449,13 +2422,10 @@ class _RulesLoadingView extends StatelessWidget {
           SizedBox(
             width: 44,
             height: 44,
-            child: CircularProgressIndicator(color: kTurquoise, strokeWidth: 3),
+            child: CircularProgressIndicator(strokeWidth: 3),
           ),
           SizedBox(height: 18),
-          Text(
-            'در حال بارگذاری قوانین…',
-            style: TextStyle(color: kMuted, fontSize: 14),
-          ),
+          Text('در حال بارگذاری قوانین…'),
         ],
       ),
     );
@@ -2469,27 +2439,29 @@ class _RulesErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(28),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 52, color: kVermilion),
+            Icon(Icons.error_outline, size: 52, color: colors.error),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'بارگذاری قوانین ممکن نشد',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: kMist,
-                fontSize: 16,
+              style: context.textTheme.headlineSmall?.copyWith(
+                color: colors.onBackground,
                 fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'لطفاً دوباره تلاش کنید.',
-              style: TextStyle(color: kMuted, fontSize: 13.5),
+              style: context.textTheme.bodyMedium?.copyWith(
+                color: colors.muted,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 28),
@@ -2510,8 +2482,9 @@ class _WebLoadingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Container(
-      color: kNight,
+      color: colors.background,
       alignment: Alignment.center,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -2519,21 +2492,22 @@ class _WebLoadingView extends StatelessWidget {
           const SizedBox(
             width: 46,
             height: 46,
-            child: CircularProgressIndicator(color: kTurquoise, strokeWidth: 3),
+            child: CircularProgressIndicator(strokeWidth: 3),
           ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'درحال برقراری ارتباط…',
-            style: TextStyle(
-              color: kMist,
-              fontSize: 15,
+            style: context.textTheme.titleMedium?.copyWith(
+              color: colors.onBackground,
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             'لطفاً کمی صبر کنید',
-            style: TextStyle(color: kMuted.withValues(alpha: 0.7), fontSize: 13),
+            style: context.textTheme.bodySmall?.copyWith(
+              color: colors.muted.withValues(alpha: 0.7),
+            ),
           ),
         ],
       ),
@@ -2549,27 +2523,29 @@ class _WebErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Container(
-      color: kNight,
+      color: colors.background,
       alignment: Alignment.center,
       padding: const EdgeInsets.all(28),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.wifi_off, size: 52, color: kVermilion),
+          Icon(Icons.wifi_off, size: 52, color: colors.error),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'برقراری ارتباط ممکن نشد',
-            style: TextStyle(
-              color: kMist,
-              fontSize: 16,
+            style: context.textTheme.headlineSmall?.copyWith(
+              color: colors.onBackground,
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'اتصال اینترنت را بررسی کنید و دوباره تلاش کنید.',
-            style: TextStyle(color: kMuted, fontSize: 13.5),
+            style: context.textTheme.bodyMedium?.copyWith(
+              color: colors.muted,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 28),
