@@ -91,14 +91,14 @@ class _SplashHostState extends State<SplashHost>
     _controller =
         AnimationController(
           vsync: this,
-          duration: const Duration(milliseconds: 3600),
+          duration: const Duration(milliseconds: 3200),
         )..addStatusListener((status) {
           if (status == AnimationStatus.completed && !_reducedMotion) {
             _beginExit();
           }
         });
     _controller.forward();
-    _homeTimer = Timer(const Duration(milliseconds: 950), () {
+    _homeTimer = Timer(const Duration(milliseconds: 900), () {
       if (mounted) setState(() => _homeReady = true);
     });
   }
@@ -113,7 +113,7 @@ class _SplashHostState extends State<SplashHost>
       _controller.value = 1;
       _homeTimer?.cancel();
       _homeReady = true;
-      Future.delayed(const Duration(milliseconds: 1300), () {
+      Future.delayed(const Duration(milliseconds: 1200), () {
         if (mounted && !_gone) _beginExit();
       });
     }
@@ -124,7 +124,7 @@ class _SplashHostState extends State<SplashHost>
     _exiting = true;
     _startSignal.value = true;
     setState(() {});
-    Future.delayed(const Duration(milliseconds: 620), () {
+    Future.delayed(const Duration(milliseconds: 580), () {
       if (mounted) setState(() => _gone = true);
     });
   }
@@ -148,7 +148,7 @@ class _SplashHostState extends State<SplashHost>
               ignoring: _exiting,
               child: AnimatedOpacity(
                 opacity: _exiting ? 0 : 1,
-                duration: const Duration(milliseconds: 520),
+                duration: const Duration(milliseconds: 480),
                 curve: Curves.easeOut,
                 child: _SplashView(controller: _controller),
               ),
@@ -177,18 +177,17 @@ class _SplashView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final emblemFade = _interval(0.04, 0.22);
-    final emblemScale = _interval(0.10, 0.30, curve: Curves.easeOutBack);
-    final emblemTurn = CurvedAnimation(
+    final compassFade = _interval(0.0, 0.25);
+    final compassSpin = CurvedAnimation(
       parent: controller,
-      curve: const Interval(0.06, 0.86, curve: Curves.linear),
+      curve: const Interval(0.0, 0.75, curve: Curves.linear),
     );
-    final word = _interval(0.22, 0.40);
-    final tag = _interval(0.32, 0.48);
-    final arc = _interval(0.36, 0.68);
-    final card = _interval(0.56, 0.78);
-    final chips = _interval(0.66, 0.84);
-    final foot = _interval(0.74, 0.90);
+    final titleFade = _interval(0.18, 0.38);
+    final taglineFade = _interval(0.28, 0.46);
+    final arc = _interval(0.34, 0.66);
+    final card = _interval(0.52, 0.74);
+    final chips = _interval(0.62, 0.82);
+    final foot = _interval(0.72, 0.90);
 
     return Material(
       color: kNight,
@@ -198,67 +197,68 @@ class _SplashView extends StatelessWidget {
           const DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0xFF081420), kNight, Color(0xFF10303F)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF050E14), kNight, Color(0xFF0C1E2A)],
               ),
             ),
-            child: CustomPaint(painter: _StarsPainter()),
+            child: CustomPaint(painter: _StarfieldPainter()),
+          ),
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: const Alignment(0.0, -0.3),
+                  radius: 1.2,
+                  colors: [
+                    kTurquoise.withValues(alpha: 0.06),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
           ),
           SafeArea(
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 420),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 26),
+                  padding: const EdgeInsets.symmetric(horizontal: 28),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Spacer(flex: 3),
-                      _SplashEmblem(
-                        fade: emblemFade,
-                        scale: emblemScale,
-                        turn: emblemTurn,
+                      _CompassRose(
+                        fade: compassFade,
+                        spin: compassSpin,
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 24),
                       FadeTransition(
-                        opacity: word,
+                        opacity: titleFade,
                         child: const Text(
                           'تیناتریپ',
                           style: TextStyle(
-                            fontSize: 30,
+                            fontSize: 34,
                             fontWeight: FontWeight.w800,
-                            color: kGold,
-                            letterSpacing: 1.4,
+                            color: kMist,
+                            letterSpacing: 0.8,
                           ),
                         ),
                       ),
                       const SizedBox(height: 8),
-                      FadeTransition(
-                        opacity: tag,
-                        child: const Text(
-                          'مرجع بهترین تورها، هتل‌ها و پروازهای داخلی و خارجی',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: kMuted,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
                       SizedBox(
                         width: double.infinity,
-                        height: 96,
+                        height: 80,
                         child: FadeTransition(
                           opacity: arc,
                           child: CustomPaint(
-                            painter: FlightArcPainter(
+                            painter: _FlightTrailPainter(
                               progress: CurvedAnimation(
                                 parent: controller,
                                 curve: const Interval(
-                                  0.36,
-                                  0.68,
+                                  0.34,
+                                  0.66,
                                   curve: Curves.easeInOut,
                                 ),
                               ).value,
@@ -266,18 +266,18 @@ class _SplashView extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 16),
                       FadeTransition(
                         opacity: card,
                         child: SlideTransition(
                           position: Tween<Offset>(
-                            begin: const Offset(0, 0.25),
+                            begin: const Offset(0, 0.2),
                             end: Offset.zero,
                           ).animate(card),
                           child: const _SplashSearchCard(),
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 12),
                       FadeTransition(
                         opacity: chips,
                         child: Row(
@@ -291,15 +291,18 @@ class _SplashView extends StatelessWidget {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 16),
                       FadeTransition(
                         opacity: foot,
-                        child: const Text(
+                        child: Text(
                           'تینا تریپ، پلی به سوی دنیا',
-                          style: TextStyle(fontSize: 12, color: kMuted),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: kMuted.withValues(alpha: 0.7),
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 16),
                       const Spacer(flex: 2),
                     ],
                   ),
@@ -313,52 +316,62 @@ class _SplashView extends StatelessWidget {
   }
 }
 
-class _SplashEmblem extends StatelessWidget {
-  const _SplashEmblem({
-    required this.fade,
-    required this.scale,
-    required this.turn,
-  });
+class _CompassRose extends StatelessWidget {
+  const _CompassRose({required this.fade, required this.spin});
 
   final Animation<double> fade;
-  final Animation<double> scale;
-  final Animation<double> turn;
+  final Animation<double> spin;
 
   @override
   Widget build(BuildContext context) {
     return FadeTransition(
       opacity: fade,
       child: ScaleTransition(
-        scale: scale,
+        scale: Tween<double>(begin: 0.6, end: 1.0).animate(
+          CurvedAnimation(parent: fade, curve: Curves.easeOutBack),
+        ),
         child: AnimatedBuilder(
-          animation: turn,
+          animation: spin,
           builder: (context, child) {
             return Stack(
               alignment: Alignment.center,
               clipBehavior: Clip.none,
               children: [
                 Transform.rotate(
-                  angle: turn.value * math.pi * 2,
+                  angle: spin.value * math.pi * 2,
                   child: CustomPaint(
-                    size: const Size(150, 150),
-                    painter: _EightPointStarPainter(
-                      color: kGold.withValues(alpha: 0.9),
-                      strokeWidth: 1.5,
+                    size: const Size(140, 140),
+                    painter: _CompassPainter(color: kTurquoise),
+                  ),
+                ),
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: kTurquoise.withValues(alpha: 0.4),
+                      width: 1.5,
                     ),
                   ),
                 ),
                 Container(
-                  width: 128,
-                  height: 128,
+                  width: 70,
+                  height: 70,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
+                    color: kNight,
                     border: Border.all(
-                      color: kGold.withValues(alpha: 0.5),
+                      color: kTurquoise.withValues(alpha: 0.6),
                       width: 1.2,
                     ),
                   ),
+                  child: const Icon(
+                    Icons.explore,
+                    color: kTurquoise,
+                    size: 32,
+                  ),
                 ),
-                const _LogoBadge(),
               ],
             );
           },
@@ -368,28 +381,79 @@ class _SplashEmblem extends StatelessWidget {
   }
 }
 
+class _CompassPainter extends CustomPainter {
+  const _CompassPainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final outer = math.min(size.width, size.height) / 2 - 4;
+
+    final paint = Paint()
+      ..color = color.withValues(alpha: 0.7)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5
+      ..strokeJoin = StrokeJoin.round;
+
+    final path = Path();
+    for (var i = 0; i < 8; i++) {
+      final angle = i * math.pi / 4 - math.pi / 2;
+      final r = i.isEven ? outer : outer * 0.35;
+      final p = Offset(
+        center.dx + math.cos(angle) * r,
+        center.dy + math.sin(angle) * r,
+      );
+      if (i == 0) {
+        path.moveTo(p.dx, p.dy);
+      } else {
+        path.lineTo(p.dx, p.dy);
+      }
+    }
+    path.close();
+    canvas.drawPath(path, paint);
+
+    final dotPaint = Paint()
+      ..color = color.withValues(alpha: 0.5)
+      ..style = PaintingStyle.fill;
+    for (var i = 0; i < 4; i++) {
+      final angle = i * math.pi / 2 - math.pi / 2;
+      final p = Offset(
+        center.dx + math.cos(angle) * (outer + 8),
+        center.dy + math.sin(angle) * (outer + 8),
+      );
+      canvas.drawCircle(p, 2, dotPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _CompassPainter oldDelegate) =>
+      oldDelegate.color != color;
+}
+
 class _LogoBadge extends StatelessWidget {
   const _LogoBadge();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 92,
-      height: 92,
-      padding: const EdgeInsets.all(9),
+      width: 80,
+      height: 80,
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.35),
-            blurRadius: 26,
-            offset: const Offset(0, 10),
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         child: Image.asset('assets/logo.jpg', fit: BoxFit.contain),
       ),
     );
@@ -405,13 +469,13 @@ class _SplashSearchCard extends StatelessWidget {
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: kNightRaised,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: kLine),
         boxShadow: [
           BoxShadow(
-            color: kTurquoise.withValues(alpha: 0.14),
-            blurRadius: 34,
-            spreadRadius: 4,
+            color: kTurquoise.withValues(alpha: 0.1),
+            blurRadius: 30,
+            spreadRadius: 2,
           ),
         ],
       ),
@@ -442,13 +506,15 @@ class _SplashSearchCard extends StatelessWidget {
             ),
           ),
           Container(
-            width: 46,
-            height: 46,
-            decoration: const BoxDecoration(
-              color: kTurquoise,
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [kTurquoise, Color(0xFF00B894)],
+              ),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.search, color: kNight, size: 22),
+            child: const Icon(Icons.search, color: kNight, size: 20),
           ),
         ],
       ),
@@ -473,7 +539,7 @@ class _SplashChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.place, size: 14, color: kTurquoise),
+          const Icon(Icons.place, size: 14, color: kGold),
           const SizedBox(width: 6),
           Text(
             label,
@@ -485,54 +551,11 @@ class _SplashChip extends StatelessWidget {
   }
 }
 
-// ---- Persian girih star motif ----------------------------------------------
-
-class _EightPointStarPainter extends CustomPainter {
-  const _EightPointStarPainter({required this.color, this.strokeWidth = 1.6});
-
-  final Color color;
-  final double strokeWidth;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final outer = math.min(size.width, size.height) / 2 - strokeWidth;
-    final inner = outer * 0.42;
-
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeJoin = StrokeJoin.round
-      ..strokeCap = StrokeCap.round;
-
-    final path = Path();
-    for (var i = 0; i < 16; i++) {
-      final angle = i * math.pi / 8 - math.pi / 2;
-      final r = i.isEven ? outer : inner;
-      final p = Offset(
-        center.dx + math.cos(angle) * r,
-        center.dy + math.sin(angle) * r,
-      );
-      if (i == 0) {
-        path.moveTo(p.dx, p.dy);
-      } else {
-        path.lineTo(p.dx, p.dy);
-      }
-    }
-    path.close();
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _EightPointStarPainter oldDelegate) =>
-      oldDelegate.color != color || oldDelegate.strokeWidth != strokeWidth;
-}
-
 // ---- Home ------------------------------------------------------------------
 
 class _ServiceItem {
   final String label;
+  final String subtitle;
   final IconData icon;
   final String? url;
   final Color accent;
@@ -540,6 +563,7 @@ class _ServiceItem {
 
   const _ServiceItem({
     required this.label,
+    required this.subtitle,
     required this.icon,
     this.url,
     required this.accent,
@@ -573,26 +597,30 @@ class _HomePageState extends State<HomePage>
   static const _services = [
     _ServiceItem(
       label: 'پرواز',
-      icon: Icons.flight_takeoff,
+      subtitle: 'بلیط هواپیما',
+      icon: Icons.flight,
       url: 'https://tinatrip.com/flight/',
       accent: kTurquoise,
     ),
     _ServiceItem(
       label: 'هتل',
+      subtitle: 'رزرو اقامت',
       icon: Icons.hotel,
       url: 'https://tinatrip.com/hotels/',
       accent: kGold,
     ),
     _ServiceItem(
       label: 'تور',
+      subtitle: 'packageهای مسافرتی',
       icon: Icons.explore,
       url: 'https://tinatrip.com/tours/',
-      accent: kVermilion,
+      accent: kPeriwinkle,
     ),
     _ServiceItem(
       label: 'گشت',
+      subtitle: 'مشاوره سفر',
       icon: Icons.edit_calendar,
-      accent: kPeriwinkle,
+      accent: kVermilion,
       opensForm: true,
     ),
   ];
@@ -609,12 +637,12 @@ class _HomePageState extends State<HomePage>
       url: 'https://my.ssaa.ir/portal/executive/inquery-exitban',
     ),
     _TravelTool(
-      label: 'پرداخت عوارض خروج از کشور',
+      label: 'پرداخت عوارض خروج',
       icon: Icons.payments,
       url: 'https://sadadpsp.ir/tollpayment',
     ),
     _TravelTool(
-      label: 'دریافت ارز مسافرتی',
+      label: 'ارز مسافرتی',
       icon: Icons.currency_exchange,
       url: 'https://travel.ice.ir/',
     ),
@@ -634,7 +662,7 @@ class _HomePageState extends State<HomePage>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2800),
+      duration: const Duration(milliseconds: 2600),
     );
     widget.startSignal?.addListener(_onStart);
   }
@@ -704,12 +732,12 @@ class _HomePageState extends State<HomePage>
       floatingActionButton: AnimatedBuilder(
         animation: _controller,
         builder: (context, _) => Opacity(
-          opacity: _interval(0.72, 0.92).value,
+          opacity: _interval(0.7, 0.9).value,
           child: FloatingActionButton.extended(
             heroTag: 'contactFab',
             backgroundColor: kTurquoise,
             foregroundColor: kNight,
-            elevation: 6,
+            elevation: 8,
             onPressed: () => Navigator.of(
               context,
             ).push(MaterialPageRoute(builder: (_) => const ContactPage())),
@@ -723,13 +751,12 @@ class _HomePageState extends State<HomePage>
       ),
       body: Stack(
         children: [
-          const Positioned.fill(child: _StarfieldBackground()),
-          const Positioned.fill(child: _HomeWatermark()),
+          const Positioned.fill(child: _HomeBackground()),
           SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
                 return SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(22, 20, 22, 96),
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 96),
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
                       minHeight: math.max(0, constraints.maxHeight - 96),
@@ -738,7 +765,7 @@ class _HomePageState extends State<HomePage>
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _RevealText(
-                          animation: _interval(0.0, 0.20),
+                          animation: _interval(0.0, 0.18),
                           child: Column(
                             children: [
                               Align(
@@ -748,33 +775,43 @@ class _HomePageState extends State<HomePage>
                                       ?.openDrawer(),
                                 ),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 20),
                               const Text(
                                 'تیناتریپ',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  fontSize: 25,
+                                  fontSize: 26,
                                   fontWeight: FontWeight.w800,
                                   color: kTurquoise,
-                                  letterSpacing: 1.1,
+                                  letterSpacing: 0.5,
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              const Text(
-                                'مرجع بهترین تورها، هتل‌ها و پروازهای داخلی و خارجی',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: kMuted,
+                              const SizedBox(height: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: kTurquoise.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(100),
+                                ),
+                                child: const Text(
+                                  'مرجع بهترین تورها، هتل‌ها و پروازهای داخلی و خارجی',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w500,
+                                    color: kTurquoise,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 30),
-                        _GatesColumn(
-                          visible: _interval(0.22, 0.52),
+                        const SizedBox(height: 32),
+                        _ServiceGrid(
+                          visible: _interval(0.2, 0.5),
                           services: _services,
                           onTap: (s) {
                             if (s.opensForm) {
@@ -788,9 +825,9 @@ class _HomePageState extends State<HomePage>
                             }
                           },
                         ),
-                        const SizedBox(height: 26),
+                        const SizedBox(height: 28),
                         _ToolsSection(
-                          visible: _interval(0.56, 0.76),
+                          visible: _interval(0.54, 0.74),
                           tools: _tools,
                           onTap: (t) => _openWeb(t.label, t.url),
                         ),
@@ -808,54 +845,35 @@ class _HomePageState extends State<HomePage>
   }
 }
 
-class _StarfieldBackground extends StatelessWidget {
-  const _StarfieldBackground();
+class _HomeBackground extends StatelessWidget {
+  const _HomeBackground();
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF081420), kNight, Color(0xFF10303F)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF050E14), kNight, Color(0xFF0C1E2A)],
         ),
       ),
-      child: const CustomPaint(painter: _StarsPainter()),
+      child: const CustomPaint(painter: _StarfieldPainter()),
     );
   }
 }
 
-class _HomeWatermark extends StatelessWidget {
-  const _HomeWatermark();
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Center(
-        child: CustomPaint(
-          size: const Size(340, 340),
-          painter: const _EightPointStarPainter(
-            color: Color(0x0DE9AF4F),
-            strokeWidth: 2,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _StarsPainter extends CustomPainter {
-  const _StarsPainter();
+class _StarfieldPainter extends CustomPainter {
+  const _StarfieldPainter();
 
   @override
   void paint(Canvas canvas, Size size) {
     final rng = math.Random(7);
-    final paint = Paint()..color = Colors.white.withValues(alpha: 0.26);
-    for (var i = 0; i < 46; i++) {
+    final paint = Paint()..color = Colors.white.withValues(alpha: 0.18);
+    for (var i = 0; i < 40; i++) {
       final x = rng.nextDouble() * size.width;
-      final y = rng.nextDouble() * size.height * 0.62;
-      final r = 0.5 + rng.nextDouble() * 0.9;
+      final y = rng.nextDouble() * size.height * 0.55;
+      final r = 0.4 + rng.nextDouble() * 0.8;
       canvas.drawCircle(Offset(x, y), r, paint);
     }
   }
@@ -864,8 +882,8 @@ class _StarsPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-class _GatesColumn extends StatelessWidget {
-  const _GatesColumn({
+class _ServiceGrid extends StatelessWidget {
+  const _ServiceGrid({
     required this.visible,
     required this.services,
     required this.onTap,
@@ -880,7 +898,7 @@ class _GatesColumn extends StatelessWidget {
     return Column(
       children: [
         for (var i = 0; i < services.length; i++) ...[
-          _GateBar(
+          _ServiceBar(
             item: services[i],
             reveal: CurvedAnimation(
               parent: visible,
@@ -895,6 +913,93 @@ class _GatesColumn extends StatelessWidget {
           if (i < services.length - 1) const SizedBox(height: 12),
         ],
       ],
+    );
+  }
+}
+
+class _ServiceBar extends StatelessWidget {
+  const _ServiceBar({
+    required this.item,
+    required this.reveal,
+    required this.onTap,
+  });
+
+  final _ServiceItem item;
+  final Animation<double> reveal;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SlideTransition(
+      position: Tween<Offset>(
+        begin: const Offset(0, 0.14),
+        end: Offset.zero,
+      ).animate(reveal),
+      child: FadeTransition(
+        opacity: reveal,
+        child: Material(
+          color: kNightRaised,
+          borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              height: 68,
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: kLine),
+                gradient: LinearGradient(
+                  begin: Alignment.centerRight,
+                  end: Alignment.centerLeft,
+                  colors: [
+                    item.accent.withValues(alpha: 0.18),
+                    kNightRaised,
+                  ],
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(width: 4, color: item.accent),
+                  const SizedBox(width: 16),
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: item.accent.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(13),
+                      border: Border.all(
+                        color: item.accent.withValues(alpha: 0.4),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Icon(item.icon, color: item.accent, size: 21),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      item.label,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: kMist,
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16),
+                    child: Icon(
+                      Icons.chevron_left,
+                      color: item.accent.withValues(alpha: 0.8),
+                      size: 24,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -914,7 +1019,7 @@ class _GateBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return SlideTransition(
       position: Tween<Offset>(
-        begin: const Offset(0, 0.16),
+        begin: const Offset(0, 0.14),
         end: Offset.zero,
       ).animate(reveal),
       child: Material(
@@ -924,7 +1029,7 @@ class _GateBar extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(18),
           child: Container(
-            height: 78,
+            height: 74,
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(18),
@@ -933,78 +1038,56 @@ class _GateBar extends StatelessWidget {
                 begin: Alignment.centerRight,
                 end: Alignment.centerLeft,
                 colors: [
-                  item.accent.withValues(alpha: 0.16),
+                  item.accent.withValues(alpha: 0.12),
                   kNightRaised,
                 ],
               ),
             ),
             child: Row(
               children: [
-                Container(width: 5, color: item.accent),
+                Container(width: 4, color: item.accent),
                 const SizedBox(width: 16),
-                _GateIcon(item: item),
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: item.accent.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: item.accent.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Icon(item.icon, color: item.accent, size: 20),
+                ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: Text(
-                    item.label,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: kMist,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        item.label,
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: kMist,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 Padding(
                   padding: const EdgeInsets.only(left: 16),
                   child: Icon(
                     Icons.chevron_left,
-                    color: item.accent.withValues(alpha: 0.9),
-                    size: 24,
+                    color: item.accent.withValues(alpha: 0.7),
+                    size: 22,
                   ),
                 ),
               ],
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _GateIcon extends StatelessWidget {
-  const _GateIcon({required this.item});
-
-  final _ServiceItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 52,
-      height: 52,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          CustomPaint(
-            size: const Size(52, 52),
-            painter: _EightPointStarPainter(
-              color: item.accent.withValues(alpha: 0.55),
-              strokeWidth: 1.3,
-            ),
-          ),
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: item.accent.withValues(alpha: 0.14),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: item.accent.withValues(alpha: 0.45),
-                width: 1.2,
-              ),
-            ),
-            child: Icon(item.icon, color: item.accent, size: 20),
-          ),
-        ],
       ),
     );
   }
@@ -1035,18 +1118,32 @@ class _ToolsSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(width: 24, height: 1.2, color: kLine),
+              Container(
+                width: 20,
+                height: 2,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [kTurquoise, Colors.transparent],
+                  ),
+                  borderRadius: BorderRadius.circular(1),
+                ),
+              ),
               const SizedBox(width: 10),
               const Text(
                 'ابزارهای سفر',
                 style: TextStyle(
-                  fontSize: 12.5,
+                  fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: kMuted,
                 ),
               ),
               const SizedBox(width: 10),
-              Expanded(child: Container(height: 1.2, color: kLine)),
+              Expanded(
+                child: Container(
+                  height: 1,
+                  color: kLine,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 14),
@@ -1056,7 +1153,7 @@ class _ToolsSection extends StatelessWidget {
                 parent: visible,
                 curve: Interval(
                   i * 0.06,
-                  i * 0.06 + 0.7,
+                  i * 0.06 + 0.65,
                   curve: Curves.easeOutCubic,
                 ),
               ),
@@ -1097,7 +1194,7 @@ class _ToolTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
         child: Container(
-          height: 76,
+          height: 72,
           padding: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
@@ -1106,25 +1203,25 @@ class _ToolTile extends StatelessWidget {
           child: Row(
             children: [
               Container(
-                width: 32,
-                height: 32,
+                width: 30,
+                height: 30,
                 decoration: BoxDecoration(
-                  color: kTurquoise.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
+                  color: kPeriwinkle.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(9),
                   border: Border.all(
-                    color: kTurquoise.withValues(alpha: 0.22),
+                    color: kPeriwinkle.withValues(alpha: 0.25),
                   ),
                 ),
-                child: Icon(tool.icon, color: kMuted, size: 17),
+                child: Icon(tool.icon, color: kMuted, size: 15),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   tool.label,
-                  maxLines: 3,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 12.5,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: kMist,
                     height: 1.35,
@@ -1151,7 +1248,7 @@ class _RevealText extends StatelessWidget {
       opacity: animation,
       child: SlideTransition(
         position: Tween<Offset>(
-          begin: const Offset(0, 0.18),
+          begin: const Offset(0, 0.15),
           end: Offset.zero,
         ).animate(animation),
         child: child,
@@ -1160,8 +1257,8 @@ class _RevealText extends StatelessWidget {
   }
 }
 
-class FlightArcPainter extends CustomPainter {
-  const FlightArcPainter({required this.progress});
+class _FlightTrailPainter extends CustomPainter {
+  const _FlightTrailPainter({required this.progress});
 
   final double progress;
 
@@ -1180,18 +1277,18 @@ class FlightArcPainter extends CustomPainter {
     final visible = metric.extractPath(0, metric.length * progress);
 
     final base = Paint()
-      ..color = kLine.withValues(alpha: 0.55)
+      ..color = kLine
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.6
+      ..strokeWidth = 1.4
       ..strokeCap = StrokeCap.round;
 
     final glow = Paint()
-      ..color = kGold.withValues(alpha: 0.85)
+      ..color = kTurquoise
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.4
+      ..strokeWidth = 3
       ..strokeCap = StrokeCap.round;
 
-    _drawDashed(canvas, visible, base, dashLength: 3, gap: 11);
+    _drawDashed(canvas, visible, base, dashLength: 3, gap: 10);
 
     if (progress > 0.02) {
       final end = metric.getTangentForOffset(metric.length * progress)!;
@@ -1227,18 +1324,18 @@ class FlightArcPainter extends CustomPainter {
 
   Path _planeGlyph() {
     final p = Path();
-    p.moveTo(-11, -4);
-    p.lineTo(11, -4);
-    p.lineTo(13, 0);
-    p.lineTo(11, 4);
-    p.lineTo(-11, 4);
-    p.lineTo(-13, 0);
+    p.moveTo(-10, -3);
+    p.lineTo(10, -3);
+    p.lineTo(12, 0);
+    p.lineTo(10, 3);
+    p.lineTo(-10, 3);
+    p.lineTo(-12, 0);
     p.close();
     return p;
   }
 
   @override
-  bool shouldRepaint(covariant FlightArcPainter oldDelegate) =>
+  bool shouldRepaint(covariant _FlightTrailPainter oldDelegate) =>
       oldDelegate.progress != progress;
 }
 
@@ -1256,13 +1353,13 @@ class _MenuButton extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Container(
-          width: 44,
-          height: 44,
+          width: 42,
+          height: 42,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(color: kLine),
           ),
-          child: const Icon(Icons.menu, color: kMist, size: 22),
+          child: const Icon(Icons.menu, color: kMist, size: 20),
         ),
       ),
     );
@@ -1283,31 +1380,50 @@ class _HomeDrawer extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: 26),
-            const Center(
+            const SizedBox(height: 28),
+            Center(
               child: Column(
                 children: [
-                  _EightPointStarGlyph(),
-                  SizedBox(height: 10),
-                  Text(
-                    'تیناتریپ',
-                    style: TextStyle(
-                      fontSize: 21,
-                      fontWeight: FontWeight.w800,
-                      color: kGold,
+                  Container(
+                    width: 60,
+                    height: 60,
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.asset(
+                        'assets/logo.jpg',
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'تیناتریپ',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: kMist,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
                   Text(
                     'منوی اصلی',
-                    style: TextStyle(fontSize: 12, color: kMuted),
+                    style: TextStyle(fontSize: 12, color: kMuted.withValues(alpha: 0.7)),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 22),
-            const Divider(color: kLine, height: 1, thickness: 1),
-            const SizedBox(height: 8),
+            const SizedBox(height: 24),
+            Container(
+              height: 1,
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              color: kLine,
+            ),
+            const SizedBox(height: 12),
             _DrawerTile(
               icon: Icons.article_outlined,
               color: kTurquoise,
@@ -1321,12 +1437,12 @@ class _HomeDrawer extends StatelessWidget {
               onTap: onRules,
             ),
             const Spacer(),
-            const Padding(
-              padding: EdgeInsets.only(bottom: 18),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 18),
               child: Text(
                 'تینا تریپ، پلی به سوی دنیا',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 11.5, color: kMuted),
+                style: TextStyle(fontSize: 11.5, color: kMuted.withValues(alpha: 0.6)),
               ),
             ),
           ],
@@ -1356,36 +1472,21 @@ class _DrawerTile extends StatelessWidget {
       child: ListTile(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         leading: Container(
-          width: 38,
-          height: 38,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.14),
-            shape: BoxShape.circle,
-            border: Border.all(color: color.withValues(alpha: 0.4)),
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: color.withValues(alpha: 0.3)),
           ),
-          child: Icon(icon, color: color, size: 19),
+          child: Icon(icon, color: color, size: 18),
         ),
         title: Text(
           label,
-          style: const TextStyle(color: kMist, fontSize: 15),
+          style: const TextStyle(color: kMist, fontSize: 14.5),
         ),
         trailing: const Icon(Icons.chevron_left, color: kMuted, size: 20),
         onTap: onTap,
-      ),
-    );
-  }
-}
-
-class _EightPointStarGlyph extends StatelessWidget {
-  const _EightPointStarGlyph();
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      size: const Size(34, 34),
-      painter: const _EightPointStarPainter(
-        color: kTurquoise,
-        strokeWidth: 1.6,
       ),
     );
   }
@@ -1417,8 +1518,8 @@ class _PrimaryButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
-                color: kTurquoise.withValues(alpha: 0.30),
-                blurRadius: 18,
+                color: kTurquoise.withValues(alpha: 0.3),
+                blurRadius: 16,
                 offset: const Offset(0, 6),
               ),
             ],
@@ -1586,9 +1687,9 @@ class _ReserveFormPageState extends State<ReserveFormPage> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF10303F), kNight],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF0C1E2A), kNight],
           ),
         ),
         child: SafeArea(
@@ -1599,9 +1700,19 @@ class _ReserveFormPageState extends State<ReserveFormPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
-                    'برای گشت، شهر مقصد و شماره تماس‌تان را بفرستید؛ کارشناسان ما با شما تماس می‌گیرند.',
-                    style: TextStyle(color: kMuted, fontSize: 14, height: 1.7),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: kTurquoise.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: kTurquoise.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: const Text(
+                      'برای گشت، شهر مقصد و شماره تماس‌تان را بفرستید؛ کارشناسان ما با شما تماس می‌گیرند.',
+                      style: TextStyle(color: kMist, fontSize: 14, height: 1.7),
+                    ),
                   ),
                   const SizedBox(height: 24),
                   const _FieldLabel('شهر مقصد'),
@@ -1676,7 +1787,7 @@ class _FieldLabel extends StatelessWidget {
       text,
       style: const TextStyle(
         color: kMist,
-        fontSize: 14.5,
+        fontSize: 14,
         fontWeight: FontWeight.w600,
       ),
     );
@@ -1686,7 +1797,7 @@ class _FieldLabel extends StatelessWidget {
 InputDecoration _inputDecoration(String hint, IconData icon) {
   return InputDecoration(
     hintText: hint,
-    hintStyle: const TextStyle(color: kMuted),
+    hintStyle: TextStyle(color: kMuted.withValues(alpha: 0.7)),
     filled: true,
     fillColor: kNight,
     prefixIcon: Icon(icon, color: kTurquoise, size: 20),
@@ -1725,9 +1836,9 @@ class ContactPage extends StatelessWidget {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF10303F), kNight],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF0C1E2A), kNight],
           ),
         ),
         child: SafeArea(
@@ -1737,12 +1848,12 @@ class ContactPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(18),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: kTurquoise.withValues(alpha: 0.10),
+                    color: kTurquoise.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: kTurquoise.withValues(alpha: 0.35),
+                      color: kTurquoise.withValues(alpha: 0.2),
                     ),
                   ),
                   child: const Text(
@@ -1829,13 +1940,13 @@ class _ContactRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 42,
-                  height: 42,
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.16),
-                    shape: BoxShape.circle,
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(icon, color: color, size: 21),
+                  child: Icon(icon, color: color, size: 20),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -1844,14 +1955,14 @@ class _ContactRow extends StatelessWidget {
                     children: [
                       Text(
                         label,
-                        style: const TextStyle(color: kMuted, fontSize: 12.5),
+                        style: TextStyle(color: kMuted.withValues(alpha: 0.7), fontSize: 12.5),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         value,
                         style: const TextStyle(
                           color: kMist,
-                          fontSize: 15,
+                          fontSize: 14.5,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -2062,7 +2173,7 @@ class _RulesPageState extends State<RulesPage> {
     if (context == null) return;
     Scrollable.ensureVisible(
       context,
-      duration: const Duration(milliseconds: 420),
+      duration: const Duration(milliseconds: 400),
       curve: Curves.easeOutCubic,
       alignment: 0.02,
     );
@@ -2075,15 +2186,15 @@ class _RulesPageState extends State<RulesPage> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF10303F), kNight],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF0C1E2A), kNight],
           ),
         ),
         child: Stack(
           children: [
             const Positioned.fill(
-              child: CustomPaint(painter: _StarsPainter()),
+              child: CustomPaint(painter: _StarfieldPainter()),
             ),
             SafeArea(
               child: _failed
@@ -2162,15 +2273,10 @@ class _RulesHero extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(20, 14, 20, 6),
       child: Column(
         children: [
-          SizedBox(
-            width: 56,
-            height: 56,
-            child: CustomPaint(
-              painter: _EightPointStarPainter(
-                color: kGold,
-                strokeWidth: 1.5,
-              ),
-            ),
+          Icon(
+            Icons.menu_book_outlined,
+            size: 48,
+            color: kGold,
           ),
           SizedBox(height: 10),
           Text(
@@ -2264,28 +2370,28 @@ class _RulesSectionCard extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.centerRight,
                 end: Alignment.centerLeft,
-                colors: [accent.withValues(alpha: 0.20), kNightRaised],
+                colors: [accent.withValues(alpha: 0.15), kNightRaised],
               ),
               border: Border(bottom: BorderSide(color: kLine)),
             ),
             child: Row(
               children: [
                 Container(
-                  width: 38,
-                  height: 38,
+                  width: 36,
+                  height: 36,
                   decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.14),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: accent.withValues(alpha: 0.45)),
+                    color: accent.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: accent.withValues(alpha: 0.3)),
                   ),
-                  child: Icon(icon, color: accent, size: 18),
+                  child: Icon(icon, color: accent, size: 17),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     section.title,
                     style: const TextStyle(
-                      fontSize: 14.5,
+                      fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: kMist,
                       height: 1.4,
@@ -2293,8 +2399,8 @@ class _RulesSectionCard extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  width: 5,
-                  height: 5,
+                  width: 6,
+                  height: 6,
                   decoration: BoxDecoration(
                     color: accent,
                     shape: BoxShape.circle,
@@ -2425,9 +2531,9 @@ class _WebLoadingView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'لطفاً کمی صبر کنید',
-            style: TextStyle(color: kMuted, fontSize: 13),
+            style: TextStyle(color: kMuted.withValues(alpha: 0.7), fontSize: 13),
           ),
         ],
       ),
